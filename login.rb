@@ -1,5 +1,7 @@
 require "sinatra"
 require "instagram"
+require 'mongo'
+require 'json'
 
 enable :sessions
 
@@ -27,7 +29,16 @@ get "/oauth/callback" do
 end
 
 get "/nav" do
-  erb :thanks
+  client = Instagram.client(:access_token => session[:access_token])
+  mongoClient = Mongo::Client.new('mongodb://ui_user:hackbay@ds137441.mlab.com:37441/adidias_insta')
+  collection = mongoClient[:hashtags]
+  result = collection.insert_one(client.user_recent_media[0])
+  puts result.n
+  if result.n == 1
+    erb :thanks, :locals => {:user => client.user, :user_recent_media => client.user_recent_media}
+  else
+    erb :bullshit
+  end
 end
 
 get "/user_recent_media" do
